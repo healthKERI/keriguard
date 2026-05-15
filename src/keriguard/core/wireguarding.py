@@ -107,6 +107,22 @@ class KERIKeyGenerator:
             logger.error(f"Failed to generate keypair: {e}")
             raise KeyGenerationError(f"Key generation failed: {e}") from e
 
+    def generate_peer_key(self, aid: str):
+        try:
+            kever = self.hab.kevers[aid]
+            public_key_bytes = pysodium.crypto_sign_pk_to_box_pk(kever.verfers[0].raw)
+
+            public_key_b64 = base64.b64encode(public_key_bytes).decode("ascii")
+
+            return public_key_b64
+
+        except KeyError:
+            logger.error(f"KERI AID {aid} not found in Hab")
+            raise KeyGenerationError(f"KERI AID not found: {aid}")
+        except Exception as e:
+            logger.error(f"Failed to generate keypair: {e}")
+            raise KeyGenerationError(f"Key generation failed: {e}") from e
+
     @staticmethod
     def generate_preshared_key() -> str:
         """
@@ -463,7 +479,7 @@ class WireguardPeer:
     preshared_key: Optional[str] = None
 
     # Metadata (not written to .conf)
-    keri_verfer_qb64: Optional[str] = None
+    keri_aid_qb64: Optional[str] = None
     peer_name: Optional[str] = None
 
     def __post_init__(self):
@@ -810,8 +826,8 @@ class WireguardConfigWriter:
 
                 if peer.peer_name:
                     lines.append(f"# Name: {peer.peer_name}")
-                if peer.keri_verfer_qb64:
-                    lines.append(f"# KERI Verfer: {peer.keri_verfer_qb64}")
+                if peer.keri_aid_qb64:
+                    lines.append(f"# KERI AID: {peer.keri_aid_qb64}")
 
                 lines.append(f"PublicKey = {peer.public_key}")
                 lines.append(f"AllowedIPs = {', '.join(peer.allowed_ips)}")
@@ -916,6 +932,7 @@ class WireguardConfigManager:
         public_key: Optional[str] = None,
         preshared_key: Optional[str] = None,
         peer_name: Optional[str] = None,
+        keri_aid: Optional[str] = None
     ) -> WireguardPeer:
         """
         Add a peer to the configuration.
@@ -925,7 +942,8 @@ class WireguardConfigManager:
             allowed_ips: List of allowed IPs in CIDR notation
             endpoint: Optional endpoint (host:port)
             persistent_keepalive: Optional keepalive interval
-            public_key: Optional public key (if not provided, generates new keypair)
+            public_key: Optional public key (if not provided, uses keri_aid)
+            keri_aid: Optional KERI AID for key generation (if not provided, uses public_key)
             preshared_key: Optional preshared key
             peer_name: Optional peer name
 
@@ -939,11 +957,11 @@ class WireguardConfigManager:
         logger.info("Adding peer to configuration")
 
         # Generate keys if not provided
+        if keri_aid is not None:
+            public_key = self.key_generator.generate_peer_key(keri_aid)
+
         if public_key is None:
-            _, public_key, keri_signer = self.key_generator.generate_keypair()
-            keri_verfer_qb64 = keri_signer.verfer.qb64
-        else:
-            keri_verfer_qb64 = None
+            raise ValueError("Either public_key or keri_aid must be provided")
 
         # Create peer
         peer = WireguardPeer(
@@ -952,7 +970,7 @@ class WireguardConfigManager:
             endpoint=endpoint,
             persistent_keepalive=persistent_keepalive,
             preshared_key=preshared_key,
-            keri_verfer_qb64=keri_verfer_qb64,
+            keri_aid_qb64=keri_aid,
             peer_name=peer_name,
         )
 

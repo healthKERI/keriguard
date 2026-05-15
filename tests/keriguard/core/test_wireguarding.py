@@ -6,6 +6,7 @@ Unit tests for keriguard.core.wireguarding module
 import base64
 from datetime import datetime
 from io import StringIO
+from pathlib import Path
 
 import pytest
 from keri.app import habbing
