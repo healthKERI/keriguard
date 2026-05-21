@@ -1,0 +1,8 @@
+{
+  "KERIGuardInterfaceDefinition": {
+  },
+  "KERIGuardConnectionDefinition": {
+    "localInterface": "KERIGuardInterfaceDefinition",
+    "remoteInterface": "KERIGuardInterfaceDefinition"
+  }
+}

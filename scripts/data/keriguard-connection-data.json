@@ -1,0 +1,9 @@
+{
+  "peer": {
+    "allowedIps": ["10.0.0.2/32"],
+    "endpoint": "147.182.240.249:43567"
+  },
+  "connectionMetadata": {
+    "connectionName": "Peer1-Peer2"
+  }
+}
