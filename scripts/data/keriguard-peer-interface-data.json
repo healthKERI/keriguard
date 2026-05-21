@@ -1,0 +1,10 @@
+{
+  "interface": {
+    "address": ["10.0.0.4/24"],
+    "listenPort": 5500
+  },
+  "interfaceMetadata": {
+    "interfaceName": "wg0",
+    "interfaceDescription": "Peer Interface Credential"
+  }
+}

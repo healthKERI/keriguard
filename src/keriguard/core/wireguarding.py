@@ -551,6 +551,13 @@ class WireguardConfig:
                 return peer
         return None
 
+    def get_peer_by_aid(self, aid: str) -> Optional[WireguardPeer]:
+        """Get a peer by KERI AID."""
+        for peer in self.peers:
+            if peer.keri_aid_qb64 == aid:
+                return peer
+        return None
+
 
 # ============================================================================
 # File I/O

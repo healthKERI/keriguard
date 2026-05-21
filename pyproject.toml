@@ -27,13 +27,34 @@ authors = [
 dependencies = [
     "keri~=1.3.4",
     "kept @git+https://git@github.com/healthKERI/kept.git@main",
-    "sentinel @git+https://git@github.com/healthKERI/sentinel",
     "multicommand>=1.0.0",
     'cbor>=1.0.0',
     'httpx>=0.28.1',
     "requests>=2.32.4",
     'requests_toolbelt==1.0.0',
     'cryptography>=42.0.0',
+]
+
+[project.optional-dependencies]
+# Sentinel framework handler (event-driven Wireguard management)
+sentinel-handler = [
+    "sentinel @git+https://git@github.com/healthKERI/sentinel",
+]
+
+# Full application stack with database
+app = [
+    "keriguard[sentinel-handler]",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "aiosqlite>=0.20.0",
+    "alembic>=1.14.0",
+]
+
+# Development dependencies
+dev = [
+    "keriguard[app]",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "black>=24.0.0",
 ]
 
 [dependency-groups]
@@ -45,11 +66,17 @@ test = [
     "pytest-mock>=3.10.0",
 ]
 
+# Sentinel handler tests (requires sentinel-handler extra)
+test-sentinel = [
+    { include-group = "test" },
+]
+
 [project.urls]
 Homepage = "https://github.com/healthKERI/keriguard"
 
 [project.scripts]
 kg = "keriguard.app.cli.kg:main"
+kg-sentinel = "keriguard.app.sentinel.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

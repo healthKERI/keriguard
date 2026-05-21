@@ -197,7 +197,6 @@ async def add_peer(args):
                     preshared_key=args.preshared_key,
                     peer_name=args.name,
                     keri_aid=args.keri_aid,
-                    # public_key not provided - will auto-generate
                 )
 
                 # Save updated configuration

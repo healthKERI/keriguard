@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 """
-heki.app.cli module
+keriguard.app.cli module
 
 """
 
