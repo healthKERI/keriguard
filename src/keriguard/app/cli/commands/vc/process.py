@@ -15,7 +15,7 @@ from keri.peer import exchanging
 from keri.vdr import credentialing, verifying
 
 from keriguard.app.sentinel.services import CredService
-from keriguard.core.wireguarding import  Schema
+from keriguard.core.wireguarding import Schema
 
 parser = argparse.ArgumentParser(
     description="Process a KERIGuard credential and generate Wireguard configuration"
@@ -94,7 +94,7 @@ async def process(args):
         verifier.processEscrows()
 
         pserder, pathed = exchanging.cloneMessage(hby, said=grant.said)
-        embeds = grant.ked['e']
+        embeds = grant.ked["e"]
         acdc = embeds["acdc"]
         # issr = acdc['i']
 
@@ -122,6 +122,3 @@ async def process(args):
 
         print("Credential did not parse correctly")
         return 1
-
-
-
