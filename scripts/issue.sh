@@ -2,17 +2,15 @@
 
 
 # Issue Interface credential to keriguard for main file
-LOCAL_SAID=$(kli vc create --name admin --alias admin --registry-name admin --schema ECRYEV1yPd4vnYNMqFSbTzvoxfz9iFlRMRTquU2uCAbY --private --recipient keriguard --data @"${KERIGUARD_SCRIPT_DIR}/data/keriguard-interface-data.json" | awk 'END{print $1}')
+kg interface create --name admin --alias admin --registry-name admin --recipient keriguard --interface-name wg0 --listen-port 5000 --address "10.0.0.4/24" --interface-description "Main Interface Credential" --output keriguard-wg0.cesr
 kli vc list --name admin --alias admin --issued
-kli ipex grant --name admin --alias admin --said "${LOCAL_SAID}" --recipient registrar
-
 # Issue Interface credential to peer
-REMOTE_SAID=$(kli vc create --name admin --alias admin --registry-name admin --schema ECRYEV1yPd4vnYNMqFSbTzvoxfz9iFlRMRTquU2uCAbY --private --recipient peer --data @"${KERIGUARD_SCRIPT_DIR}/data/keriguard-peer-interface-data.json" | awk 'END{print $1}')
-kli vc list --name admin --alias admin --issued
-kli ipex grant --name admin --alias admin --said "${REMOTE_SAID}" --recipient registrar
+kg interface create --name admin --alias admin --registry-name admin --recipient peer --interface-name wg0 --listen-port 5000 --address "10.0.0.3/24" --interface-description "Main Interface Credential" --output keriguard-peer-wg0.cesr
 
-echo "[\"$LOCAL_SAID\", \"$REMOTE_SAID\"]" | jq -f ${KERIGUARD_SCRIPT_DIR}/data/keriguard-connection-edges.jq > /tmp/keriguard-conneciton-edges.json
-CONNECTION_SAID=$(kli vc create --name admin --alias admin --registry-name admin --schema EFUl2WDAhhdvqba5GhSxWbSU7eUGx_ZtbRZHgkXBFR-R --private --recipient keriguard --data @"${KERIGUARD_SCRIPT_DIR}/data/keriguard-connection-data.json" --edges @/tmp/keriguard-conneciton-edges.json | awk 'END{print $1}')
 kli vc list --name admin --alias admin --issued
-kli ipex grant --name admin --alias admin --said "${CONNECTION_SAID}" --recipient registrar
+
+exit
+
+kg peer add --name admin --alias admin --connection-name "Peer2Peer" --allowed-ips "10.0.51.1/32" --endpoint 147.182.240.249:43567 --local-interface-said ELyZc672lDbFDBb8U6icJv1367o50YAXJ_fjLK501azU --remote-interface-said EE8gGw4iRQntJD-GeW6Ud76oOKbqKWl7fzIuIOyUKFsf
+kli vc list --name admin --alias admin --issued
 

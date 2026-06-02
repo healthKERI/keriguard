@@ -140,4 +140,4 @@ class CredService:
             logger.error(f"Missing entry for interface credential: {said}")
             return
 
-        logger.debug(f"Connection credential service processing complete for {said}")
+        logger.info(f"Connection credential service processing complete for {said}")
