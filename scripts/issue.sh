@@ -9,8 +9,10 @@ kg interface create --name admin --alias admin --registry-name admin --recipient
 
 kli vc list --name admin --alias admin --issued
 
-exit
+kg peers connect --name admin --alias admin --peer "name=keriguard,endpoint=147.182.240.249:43567,allowed-ips=10.0.0.4/32,environment=production" \
+                                            --peer "name=peer,endpoint=143.56.178.5:43567,allowed-ips=10.0.0.3/32,environment=production" \
+                                            --output "keriguard-to-peer-connection.cesr"
 
-kg peer add --name admin --alias admin --connection-name "Peer2Peer" --allowed-ips "10.0.51.1/32" --endpoint 147.182.240.249:43567 --local-interface-said ELyZc672lDbFDBb8U6icJv1367o50YAXJ_fjLK501azU --remote-interface-said EE8gGw4iRQntJD-GeW6Ud76oOKbqKWl7fzIuIOyUKFsf
+
 kli vc list --name admin --alias admin --issued
 

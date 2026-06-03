@@ -45,6 +45,7 @@ kli oobi resolve --name keriguard-sentinel --oobi-alias keriguard --oobi http://
 echo 'resolving admin'
 kli oobi resolve --name keriguard --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha
 kli oobi resolve --name registrar --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha
+kli oobi resolve --name peer --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness/BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha
 echo 'resolving peer'
 kli oobi resolve --name admin --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
 kli oobi resolve --name keriguard --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
@@ -55,7 +56,5 @@ kli import --name admin --alias registrar --file /tmp/registrar.cesr
 echo 'resolving sentinels'
 kli import --name keriguard --alias keriguard-sentinel --file /tmp/keriguard-sentinel.cesr
 kli import --name registrar --alias registrar-sentinel --file /tmp/registrar-sentinel.cesr
-
-
 
 kli vc registry incept --name admin --alias admin --registry-name admin

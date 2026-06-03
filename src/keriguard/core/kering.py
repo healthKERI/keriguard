@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime, UTC
 
 from keri import kering
-from keri.app import signing
+from keri.app import signing, connecting
 from keri.core import serdering, parsing, coring
 from keri.db import dbing
 from keri.help import helping
@@ -29,6 +29,7 @@ class Issuer:
         self.hab = hab
         self.rgy = rgy
         self.exc = exchanging.Exchanger(hby=hby, handlers=[])
+        self.org = connecting.Organizer(hby=hby)
         self.registrar = credentialing.Registrar(
             hby=self.hby, rgy=self.rgy, counselor=None
         )
@@ -58,7 +59,8 @@ class Issuer:
             if registry is None:
                 raise kering.ConfigurationError(
                     f"Registry '{registry_name}' not found. "
-                    f"Create with: kli vc registry incept --name {self.hby.name} --alias {self.hab.name} --registry-name "
+                    f"Create with: kli vc registry incept --name {self.hby.name} --alias {self.hab.name} "
+                    f"--registry-name "
                     f"{registry_name}"
                 )
 
@@ -120,39 +122,57 @@ class Issuer:
 
     async def issue_connection_credential(
         self,
-        peer: dict,
-        connection_metadata: dict,
-        local_interface_said: str,
-        remote_interface_said: str,
+        peers: list,
         auths: dict,
     ):
         """
         Issue a connection credential linking two interface credentials.
 
         Args:
-            peer: Peer configuration dict with allowedIps, endpoint, and optional persistentKeepalive, presharedKey, peerName
-            connection_metadata: Metadata dict with connectionName and optional purpose, environment, bandwidthClass
-            local_interface_said: SAID of the local interface credential
-            remote_interface_said: SAID of the remote interface credential
+            peers: List of 2 peer dicts, each containing:
+                - interface_said: SAID of the interface credential
+                - peer_config: Peer configuration dict with allowedIps, endpoint, and optional persistentKeepalive,
+                presharedKey, peerName
+                - connection_metadata: Metadata dict with connectionName and optional purpose, environment,
+                bandwidthClass
             auths: Authorization dict for the registrar
 
         Returns:
             The created credential (Creder object)
         """
-        (
-            creder,
-            *_,
-        ) = self.rgy.reger.cloneCred(said=local_interface_said)
+        if len(peers) != 2:
+            raise kering.ConfigurationError(
+                f"Exactly 2 peers required, got {len(peers)}"
+            )
+
+        # Validate first interface credential and get registry info
+        peer1_name = peers[0]["connection_metadata"]["connectionName"]
+        results = self.org.find("alias", peer1_name)
+        if not results:
+            raise kering.ConfigurationError(
+                f"Recipient '{peer1_name}' not found. "
+                f"Resolve recipient OOBI first with: kli oobi resolve --name {peer1_name} --oobi-alias <alias> --oobi "
+                f"<url>"
+            )
+
+        peer1_aid = results[0].get("id")
+        saiders = self.rgy.reger.subjs.get(peer1_aid)
+        creder = None
+        for saider in saiders:
+            (
+                c,
+                *_,
+            ) = self.rgy.reger.cloneCred(said=saider.qb64)
+            if c.schema == Schema.INTERFACE_SCHEMA:
+                creder = c
+                break
+
         if not creder:
             raise kering.ConfigurationError(
-                f"Local interface credential '{local_interface_said}' not found. "
+                f"Interface credential for {peer1_name} not found. "
             )
 
-        if creder.schema != Schema.INTERFACE_SCHEMA:
-            raise kering.ConfigurationError(
-                f"Local interface credential '{local_interface_said}' is not an interface credential. "
-            )
-
+        peers[0]["interface_said"] = creder.said
         recipient = creder.attrib.get("i")
         registry_said = creder.sad.get("ri")
         registry = self.rgy.regs.get(registry_said)
@@ -160,31 +180,63 @@ class Issuer:
         if registry is None:
             raise kering.ConfigurationError(
                 f"Registry '{registry_said}' not found. "
-                f"Create with: kli vc registry incept --name {self.hby.name} --alias {self.hab.name} --registry-name <REGISTRY_NAME>"
+                f"Create with: kli vc registry incept --name {self.hby.name} --alias {self.hab.name} --registry-name "
+                f"<REGISTRY_NAME>"
             )
 
+        # Validate second interface credential
+        peer2_name = peers[1]["connection_metadata"]["connectionName"]
+        results = self.org.find("alias", peer2_name)
+        if not results:
+            raise kering.ConfigurationError(
+                f"Recipient '{peer2_name}' not found. "
+                f"Resolve recipient OOBI first with: kli oobi resolve --name {peer1_name} --oobi-alias <alias> --oobi "
+                f"<url>"
+            )
+
+        peer2_aid = results[0].get("id")
+        saiders = self.rgy.reger.subjs.get(peer2_aid)
+        creder2 = None
+        for saider in saiders:
+            (
+                c,
+                *_,
+            ) = self.rgy.reger.cloneCred(said=saider.qb64)
+            if c.schema == Schema.INTERFACE_SCHEMA:
+                creder2 = c
+                break
+
+        if not creder2:
+            raise kering.ConfigurationError(
+                f"Interface credential for {peer1_name} not found. "
+            )
+
+        peers[1]["interface_said"] = creder2.said
         dt = datetime.now(UTC).isoformat()
         credential_data = {
-            "peer": peer,
-            "connectionMetadata": connection_metadata,
             "dt": dt,
         }
 
-        # Build edges block referencing local and remote interface credentials
+        # Build edges array with 2 peer configurations
         edges = {
             "d": "",
-            "localInterface": {
-                "n": local_interface_said,
+            "peer1": {
+                "n": creder.said,
                 "s": Schema.INTERFACE_SCHEMA,
                 "o": "NI2I",
+                **peers[0]["peer_config"],
+                "connectionMetadata": peers[0]["connection_metadata"],
             },
-            "remoteInterface": {
-                "n": remote_interface_said,
+            "peer2": {
+                "n": creder2.said,
                 "s": Schema.INTERFACE_SCHEMA,
                 "o": "NI2I",
+                **peers[1]["peer_config"],
+                "connectionMetadata": peers[1]["connection_metadata"],
             },
         }
-        _, edges = coring.Saider.saidify(sad=edges, label=coring.Saids.d)
+
+        _, edges = coring.Saider.saidify(sad=edges)
 
         try:
             # Create credential with edges

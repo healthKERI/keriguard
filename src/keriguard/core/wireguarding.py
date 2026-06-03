@@ -23,7 +23,7 @@ logger = help.ogler.getLogger()
 
 class Schema:
     INTERFACE_SCHEMA = "ECRYEV1yPd4vnYNMqFSbTzvoxfz9iFlRMRTquU2uCAbY"
-    CONNECTION_SCHEMA = "EFUl2WDAhhdvqba5GhSxWbSU7eUGx_ZtbRZHgkXBFR-R"
+    CONNECTION_SCHEMA = "EBgZ2DHFAGsnoTluBoigLkIGf0Wrw7sZm8ztUj4PKp7A"
 
 
 # ============================================================================
