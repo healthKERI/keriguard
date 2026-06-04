@@ -2,7 +2,7 @@
   "KERIGuardInterfaceDefinition": {
   },
   "KERIGuardConnectionDefinition": {
-    "localInterface": "KERIGuardInterfaceDefinition",
-    "remoteInterface": "KERIGuardInterfaceDefinition"
+    "peer1": "KERIGuardInterfaceDefinition",
+    "peer2": "KERIGuardInterfaceDefinition"
   }
 }

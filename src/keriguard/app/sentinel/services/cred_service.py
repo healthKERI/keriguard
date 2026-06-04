@@ -83,26 +83,60 @@ class CredService:
         - Implement role-based access control
         """
         try:
-            payload = creder.attrib
-            peer = payload.get("peer")
-
             edges = creder.edge
 
-            # Process local interface credential to load the Interface
-            local_interface = edges.get("localInterface")
-            local_interface_creder, *_ = self.rgy.reger.cloneCred(
-                said=local_interface.get("n")
-            )
+            # Extract peer1 and peer2 from edges
+            peer1 = edges.get("peer1")
+            peer2 = edges.get("peer2")
 
-            local_payload = local_interface_creder.attrib
-            recipient = local_payload.get("i")
-            if (hab := self.hby.habs.get(recipient)) is None:
-                logger.debug(f"Recipient {recipient} not found in habby")
+            if not peer1 or not peer2:
+                logger.error(f"Connection credential {said} missing peer1 or peer2")
                 return
 
-            metadata = local_payload.get("interfaceMetadata")
+            # Clone both interface credentials
+            peer1_interface_creder, *_ = self.rgy.reger.cloneCred(said=peer1.get("n"))
+            peer2_interface_creder, *_ = self.rgy.reger.cloneCred(said=peer2.get("n"))
 
+            if not peer1_interface_creder or not peer2_interface_creder:
+                logger.error(
+                    f"Failed to load interface credentials for connection {said}"
+                )
+                return
+
+            # Determine which peer is local by checking interface credential recipients
+            peer1_recipient = peer1_interface_creder.attrib.get("i")
+            peer2_recipient = peer2_interface_creder.attrib.get("i")
+
+            # Check if peer1's interface belongs to this host
+            if (hab := self.hby.habs.get(peer1_recipient)) is not None:
+                # peer1 is local, peer2 is remote
+                local_interface_creder = peer1_interface_creder
+                remote_interface_creder = peer2_interface_creder
+                remote_peer = peer2
+                logger.debug(
+                    f"Matched peer1 interface to local host: {peer1_recipient}"
+                )
+            # Check if peer2's interface belongs to this host
+            elif (hab := self.hby.habs.get(peer2_recipient)) is not None:
+                # peer2 is local, peer1 is remote
+                local_interface_creder = peer2_interface_creder
+                remote_interface_creder = peer1_interface_creder
+                remote_peer = peer1
+                logger.debug(
+                    f"Matched peer2 interface to local host: {peer2_recipient}"
+                )
+            else:
+                # Neither peer is local, ignore this credential
+                logger.debug(
+                    f"Neither peer interface belongs to this host, ignoring credential {said}"
+                )
+                return
+
+            # Extract interface name from local interface credential
+            local_payload = local_interface_creder.attrib
+            metadata = local_payload.get("interfaceMetadata")
             interface_name = metadata.get("interfaceName")
+
             config_path = Path(self.config_dir) / f"{interface_name}.conf"
             if not config_path.exists() or not config_path.is_file():
                 logger.error(
@@ -113,23 +147,28 @@ class CredService:
             manager = WireguardConfigManager(hab=hab)
             config = manager.load_config(config_path)
 
-            # Process remote credential to generate the Peer
-            remote_interface = edges.get("remoteInterface")
-            remote_interface_creder, *_ = self.rgy.reger.cloneCred(
-                said=remote_interface.get("n")
-            )
-            remote_payload = remote_interface_creder.attrib
-            remote_aid = remote_payload.get("i")
+            # Extract peer configuration from remote peer object
+            allowed_ips = remote_peer.get("allowedIps", [])
+            endpoint = remote_peer.get("endpoint")
+            persistent_keepalive = remote_peer.get("persistentKeepalive")
+            preshared_key = remote_peer.get("presharedKey")
+
+            # Extract peer name from connection metadata
+            connection_metadata = remote_peer.get("connectionMetadata", {})
+            peer_name = connection_metadata.get("connectionName")
+
+            # Get remote AID from remote interface credential
+            remote_aid = remote_interface_creder.attrib.get("i")
 
             # Generate peer with auto-generated keys
             logger.info(f"Generating peer keys using KERI identity: {hab.pre}")
             manager.add_peer_to_config(
                 config,
-                allowed_ips=peer.get("allowedIps"),
-                endpoint=peer.get("endpoint"),
-                persistent_keepalive=peer.get("persistentKeepalive"),
-                preshared_key=peer.get("presharedKey"),
-                peer_name=peer.get("peerName"),
+                allowed_ips=allowed_ips,
+                endpoint=endpoint,
+                persistent_keepalive=persistent_keepalive,
+                preshared_key=preshared_key,
+                peer_name=peer_name,
                 keri_aid=remote_aid,
             )
 
