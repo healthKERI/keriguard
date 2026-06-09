@@ -42,73 +42,6 @@ class CredService:
         self.rgy = rgy
         self.config_dir = config_dir
 
-    async def resolve_peer_aid_and_retry(
-        self,
-        said: str,
-        creder: SerderACDC,
-        missing_aid: str,
-        max_attempts: int = 10,
-        base_delay: float = 1.0,
-    ):
-        """
-        Retry connection credential processing when peer AID is missing.
-
-        This method attempts to resolve a missing peer AID by:
-        1. Processing escrows to pull in missing key state
-        2. Checking if AID appears in kevers
-        3. Retrying the connection credential processing
-
-        Args:
-            said: Credential SAID
-            creder: Connection credential
-            missing_aid: The AID that was missing
-            max_attempts: Maximum retry attempts (default: 10)
-            base_delay: Base delay for exponential backoff in seconds (default: 1.0)
-        """
-        logger.info(
-            f"Starting peer AID resolution for {missing_aid} (credential {said})"
-        )
-        watcher_connector = LocalWatcherConnector(self.hby, self.hab, self.sentinel_aid)
-        watcher_connector.watch(missing_aid, None)
-
-        for attempt in range(1, max_attempts + 1):
-            # Process escrows to try to resolve missing AID
-            self.hby.kvy.processEscrows()
-
-            # Check if AID is now available
-            if missing_aid in self.hby.kevers:
-                logger.info(
-                    f"Peer AID {missing_aid} resolved after {attempt} attempt(s)"
-                )
-                # Retry the connection processing
-                try:
-                    await self.process_connection_credential(said, creder)
-                    logger.info(
-                        f"Successfully processed connection credential {said} after AID resolution"
-                    )
-                    return
-                except Exception as e:
-                    logger.error(
-                        f"Failed to process connection credential after AID resolution: {e}"
-                    )
-                    return
-
-            logger.info(
-                f"Attempt {attempt}/{max_attempts} to resolve peer AID {missing_aid} failed"
-            )
-
-            # If this wasn't the last attempt, wait before retrying
-            if attempt < max_attempts:
-                delay = base_delay * (2 ** (attempt - 1))
-                logger.debug(f"Waiting {delay}s before next retry")
-                await asyncio.sleep(delay)
-
-        logger.error(
-            f"Failed to resolve peer AID {missing_aid} after {max_attempts} attempts. "
-            f"Connection credential {said} could not be processed. "
-            f"User may need to run: kli oobi resolve --name <name> --oobi <oobi-url>"
-        )
-
     async def process_interface_credential(self, said: str, creder: SerderACDC):
         """
         Process credential event for access control.
@@ -123,7 +56,7 @@ class CredService:
         interface = payload.get("interface")
         metadata = payload.get("interfaceMetadata")
 
-        interface_name = metadata.get("interfaceName")
+        interface_name = metadata.get("interfaceName", "")
         interface_description = metadata.get("interfaceDescription", "")
 
         recipient = payload.get("i")
@@ -131,16 +64,28 @@ class CredService:
             logger.info(f"Recipient {recipient} not found in hby, this is for a peer.")
             return
 
-        manager = WireguardConfigManager(hab=hab)
-        config = manager.generate_config(
-            address=interface.get("address"),
-            listen_port=interface.get("listenPort"),
-            dns=interface.get("dns", None),
-            mtu=interface.get("mtu"),
-            table=interface.get("table", None),
-            config_name=interface_name,
-            description=interface_description,
-        )
+        config_path = Path(self.config_dir) / f"{interface_name}.conf"
+        if not config_path.exists() or not config_path.is_file():
+            manager = WireguardConfigManager(hab=hab)
+            config = manager.generate_config(
+                address=interface.get("address"),
+                listen_port=interface.get("listenPort"),
+                dns=interface.get("dns", None),
+                mtu=interface.get("mtu"),
+                table=interface.get("table", None),
+                config_name=interface_name,
+                description=interface_description,
+            )
+        else:
+            manager = WireguardConfigManager(hab=hab)
+            config = manager.load_config(config_path)
+            config.address = interface.get("address")
+            config.listen_port = interface.get("listenPort")
+            config.dns = interface.get("dns", None)
+            config.mtu = interface.get("mtu")
+            config.table = interface.get("table", None)
+            config.config_name = interface_name
+            config.description = interface_description
 
         # Add pre/post up/down scripts if provided
         # Handle argument names with underscores (argparse converts dashes to underscores)
@@ -300,3 +245,70 @@ class CredService:
             return
 
         logger.info(f"Connection credential service processing complete for {said}")
+
+    async def resolve_peer_aid_and_retry(
+        self,
+        said: str,
+        creder: SerderACDC,
+        missing_aid: str,
+        max_attempts: int = 10,
+        base_delay: float = 1.0,
+    ):
+        """
+        Retry connection credential processing when peer AID is missing.
+
+        This method attempts to resolve a missing peer AID by:
+        1. Processing escrows to pull in missing key state
+        2. Checking if AID appears in kevers
+        3. Retrying the connection credential processing
+
+        Args:
+            said: Credential SAID
+            creder: Connection credential
+            missing_aid: The AID that was missing
+            max_attempts: Maximum retry attempts (default: 10)
+            base_delay: Base delay for exponential backoff in seconds (default: 1.0)
+        """
+        logger.info(
+            f"Starting peer AID resolution for {missing_aid} (credential {said})"
+        )
+        watcher_connector = LocalWatcherConnector(self.hby, self.hab, self.sentinel_aid)
+        watcher_connector.watch(missing_aid, None)
+
+        for attempt in range(1, max_attempts + 1):
+            # Process escrows to try to resolve missing AID
+            self.hby.kvy.processEscrows()
+
+            # Check if AID is now available
+            if missing_aid in self.hby.kevers:
+                logger.info(
+                    f"Peer AID {missing_aid} resolved after {attempt} attempt(s)"
+                )
+                # Retry the connection processing
+                try:
+                    await self.process_connection_credential(said, creder)
+                    logger.info(
+                        f"Successfully processed connection credential {said} after AID resolution"
+                    )
+                    return
+                except Exception as e:
+                    logger.error(
+                        f"Failed to process connection credential after AID resolution: {e}"
+                    )
+                    return
+
+            logger.info(
+                f"Attempt {attempt}/{max_attempts} to resolve peer AID {missing_aid} failed"
+            )
+
+            # If this wasn't the last attempt, wait before retrying
+            if attempt < max_attempts:
+                delay = base_delay * (2 ** (attempt - 1))
+                logger.debug(f"Waiting {delay}s before next retry")
+                await asyncio.sleep(delay)
+
+        logger.error(
+            f"Failed to resolve peer AID {missing_aid} after {max_attempts} attempts. "
+            f"Connection credential {said} could not be processed. "
+            f"User may need to run: kli oobi resolve --name <name> --oobi <oobi-url>"
+        )
