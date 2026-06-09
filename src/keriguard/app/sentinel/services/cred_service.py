@@ -28,7 +28,14 @@ logger = help.ogler.getLogger()
 class CredService:
     """Service for managing credential-based access control."""
 
-    def __init__(self, hby, hab, sentinel_aid, rgy, config_dir):
+    def __init__(
+        self,
+        hby,
+        rgy,
+        config_dir,
+        hab=None,
+        sentinel_aid=None,
+    ):
         self.hby = hby
         self.hab = hab
         self.sentinel_aid = sentinel_aid
@@ -265,13 +272,16 @@ class CredService:
                     f"Starting background resolution task."
                 )
                 # Start background task to resolve AID and retry
-                asyncio.create_task(
-                    self.resolve_peer_aid_and_retry(
-                        said=said, creder=creder, missing_aid=remote_aid
+                if self.hab and self.sentinel_aid:
+                    asyncio.create_task(
+                        self.resolve_peer_aid_and_retry(
+                            said=said, creder=creder, missing_aid=remote_aid
+                        )
                     )
-                )
-                # Don't continue with save/restart since peer wasn't added
-                return
+                    # Don't continue with save/restart since peer wasn't added
+                    return
+                else:
+                    raise
 
             # Save updated configuration
             manager.save_config(config, config_path, backup=True)
