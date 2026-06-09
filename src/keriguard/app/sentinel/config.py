@@ -17,6 +17,7 @@ class SentinelConfig:
 
     # Sentinel framework settings
     export_dir: str  # Directory containing kel/, tel/, cred/
+    sentinel_aid: str | None = None
     poll_interval: float = 2.0  # Polling interval in seconds
 
     # Wireguard configuration
@@ -27,6 +28,4 @@ class SentinelConfig:
     hab: Hab = None
     rgy: Regery = None
     # Handler behavior
-    auto_create_configs: bool = True  # Auto-create configs for new AIDs
-    auto_add_peers: bool = True  # Auto-add peers on KEL updates
     backup_configs: bool = True  # Create .bak files on updates

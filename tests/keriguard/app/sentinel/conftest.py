@@ -30,8 +30,6 @@ def test_config(tmp_path):
         config_dir=str(tmp_path / "configs"),
         hby=mock_hby,
         rgy=mock_rgy,
-        auto_create_configs=True,
-        auto_add_peers=True,
         backup_configs=False,  # Disable backups in tests
     )
 

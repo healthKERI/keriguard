@@ -30,7 +30,9 @@ class CredHandler:
             kvy=config.hby.kvy, tvy=self.rgy.tvy, vry=self.verifier
         )
 
-        self.service = CredService(config.hby, config.rgy, config.config_dir)
+        self.service = CredService(
+            config.hby, config.hab, config.sentinel_aid, config.rgy, config.config_dir
+        )
 
     async def process(self, event: CredentialEvent):
         """

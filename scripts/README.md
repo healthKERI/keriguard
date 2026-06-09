@@ -40,7 +40,7 @@ Now you can launch the KERIGuard daemon and the Registrar daemon:
 
 In the remaining 2 terminal windows (3 and 4), you will run the following commands:
 - Terminal 3: `registrar start --name registrar --alias registrar --sentinel-export-dir /usr/local/var/sentinel/registrar/ -I EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr`
-- Terminal 4: `kg guardian start --name keriguard --alias keriguard --config-dir /usr/local/var/wireguard/ --sentinel /usr/local/var/sentinel/keriguard`
+- Terminal 4: `kg guardian start --name keriguard --alias keriguard --config-dir /usr/local/var/wireguard/ -e /usr/local/var/sentinel/keriguard --sentinel-aid BJsrl2e6cdLMz19ogn_IU8CC9LKoXXYHZSGcxXLevlJc`
 
 
 And finally, you can issue the interface credentials and publish them to the registrar:
