@@ -14,8 +14,12 @@ from keri.kering import MissingEntryError
 from sentinel.framework.watching import LocalWatcherConnector
 
 from keriguard.core import WireguardConfigManager
-from keriguard.core.systeming import restart_wireguard, WireGuardControlError, \
-    enable_wireguard, start_wireguard
+from keriguard.core.systeming import (
+    restart_wireguard,
+    WireGuardControlError,
+    enable_wireguard,
+    start_wireguard,
+)
 from keriguard.core.wireguarding import PeerAIDMissingError
 
 logger = help.ogler.getLogger()
@@ -37,7 +41,7 @@ class CredService:
         creder: SerderACDC,
         missing_aid: str,
         max_attempts: int = 10,
-        base_delay: float = 1.0
+        base_delay: float = 1.0,
     ):
         """
         Retry connection credential processing when peer AID is missing.
@@ -54,7 +58,9 @@ class CredService:
             max_attempts: Maximum retry attempts (default: 10)
             base_delay: Base delay for exponential backoff in seconds (default: 1.0)
         """
-        logger.info(f"Starting peer AID resolution for {missing_aid} (credential {said})")
+        logger.info(
+            f"Starting peer AID resolution for {missing_aid} (credential {said})"
+        )
         watcher_connector = LocalWatcherConnector(self.hby, self.hab, self.sentinel_aid)
         watcher_connector.watch(missing_aid, None)
 
@@ -64,14 +70,20 @@ class CredService:
 
             # Check if AID is now available
             if missing_aid in self.hby.kevers:
-                logger.info(f"Peer AID {missing_aid} resolved after {attempt} attempt(s)")
+                logger.info(
+                    f"Peer AID {missing_aid} resolved after {attempt} attempt(s)"
+                )
                 # Retry the connection processing
                 try:
                     await self.process_connection_credential(said, creder)
-                    logger.info(f"Successfully processed connection credential {said} after AID resolution")
+                    logger.info(
+                        f"Successfully processed connection credential {said} after AID resolution"
+                    )
                     return
                 except Exception as e:
-                    logger.error(f"Failed to process connection credential after AID resolution: {e}")
+                    logger.error(
+                        f"Failed to process connection credential after AID resolution: {e}"
+                    )
                     return
 
             logger.info(
@@ -140,7 +152,9 @@ class CredService:
             await start_wireguard(interface_name)
 
         except WireGuardControlError as e:
-            logger.error(f"Failed to enable and start WireGuard interface {interface_name}: {e}")
+            logger.error(
+                f"Failed to enable and start WireGuard interface {interface_name}: {e}"
+            )
             return
 
         logger.debug(f"Interface credential service processing complete for {said}")
@@ -245,7 +259,7 @@ class CredService:
                     peer_name=peer_name,
                     keri_aid=remote_aid,
                 )
-            except PeerAIDMissingError as e:
+            except PeerAIDMissingError:
                 logger.warning(
                     f"Peer AID {remote_aid} not found in kevers for credential {said}. "
                     f"Starting background resolution task."
@@ -253,9 +267,7 @@ class CredService:
                 # Start background task to resolve AID and retry
                 asyncio.create_task(
                     self.resolve_peer_aid_and_retry(
-                        said=said,
-                        creder=creder,
-                        missing_aid=remote_aid
+                        said=said, creder=creder, missing_aid=remote_aid
                     )
                 )
                 # Don't continue with save/restart since peer wasn't added
@@ -264,11 +276,13 @@ class CredService:
             # Save updated configuration
             manager.save_config(config, config_path, backup=True)
 
-            try :
+            try:
                 await restart_wireguard(interface_name)
 
             except WireGuardControlError as e:
-                logger.error(f"Failed to restart WireGuard interface {interface_name}: {e}")
+                logger.error(
+                    f"Failed to restart WireGuard interface {interface_name}: {e}"
+                )
                 return
 
         except MissingEntryError:

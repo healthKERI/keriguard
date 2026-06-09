@@ -50,8 +50,14 @@ class KELService:
         logger.debug(f"  Public key: {public_key}...")
 
         # Find config file for this AID (or create if auto-create enabled)
-        my_saids = [saider.qb64 for saider in self.config.rgy.reger.subjs.get(keys=self.config.hab.pre)]
-        interface_saids = [saider.qb64 for saider in self.config.rgy.reger.schms.get(keys=Schema.INTERFACE_SCHEMA)]
+        my_saids = [
+            saider.qb64
+            for saider in self.config.rgy.reger.subjs.get(keys=self.config.hab.pre)
+        ]
+        interface_saids = [
+            saider.qb64
+            for saider in self.config.rgy.reger.schms.get(keys=Schema.INTERFACE_SCHEMA)
+        ]
         saids = list(set(my_saids) & set(interface_saids))
         if not saids:
             logger.warning(f"No local interface credential saids found for AID {aid}")
@@ -105,13 +111,14 @@ class KELService:
             WireguardConfigWriter.write_file(config, config_path)
             logger.info(f"Updated config file: {config_path}")
 
-            try :
+            try:
                 await restart_wireguard(interface_name)
 
             except WireGuardControlError as e:
-                logger.error(f"Failed to restart WireGuard interface {interface_name}: {e}")
+                logger.error(
+                    f"Failed to restart WireGuard interface {interface_name}: {e}"
+                )
                 return
-
 
     @staticmethod
     def _verfer_to_wg_pubkey(verfer: Verfer) -> str:
