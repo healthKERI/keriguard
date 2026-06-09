@@ -18,6 +18,7 @@ from keriguard.core import (
     WireguardConfigWriter,
     WireguardPeer,
 )
+from keriguard.core.systeming import WireGuardControlError, restart_wireguard
 from keriguard.core.wireguarding import Schema
 from ..config import SentinelConfig
 
@@ -104,7 +105,16 @@ class KELService:
             WireguardConfigWriter.write_file(config, config_path)
             logger.info(f"Updated config file: {config_path}")
 
-    def _verfer_to_wg_pubkey(self, verfer: Verfer) -> str:
+            try :
+                await restart_wireguard(interface_name)
+
+            except WireGuardControlError as e:
+                logger.error(f"Failed to restart WireGuard interface {interface_name}: {e}")
+                return
+
+
+    @staticmethod
+    def _verfer_to_wg_pubkey(verfer: Verfer) -> str:
         """Convert KERI verfer to Wireguard public key."""
         # Convert signing key to encryption key
         public_key_bytes = pysodium.crypto_sign_pk_to_box_pk(verfer.raw)
