@@ -41,8 +41,6 @@ class KeriguardEventHandler(EventHandler):
 
         logger.info("Keriguard Sentinel handler initialized")
         logger.info(f"  Config directory: {config.config_dir}")
-        logger.info(f"  Auto-create configs: {config.auto_create_configs}")
-        logger.info(f"  Auto-add peers: {config.auto_add_peers}")
 
     async def on_kel(self, event: KELEvent):
         """

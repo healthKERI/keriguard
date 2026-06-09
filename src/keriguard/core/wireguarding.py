@@ -43,6 +43,12 @@ class KeyGenerationError(WireguardError):
     pass
 
 
+class PeerAIDMissingError(WireguardError):
+    """Exception raised when peer AID is missing in configuration."""
+
+    pass
+
+
 class ValidationError(WireguardError):
     """Exception raised when configuration validation fails."""
 
@@ -123,7 +129,7 @@ class KERIKeyGenerator:
 
         except KeyError:
             logger.error(f"KERI AID {aid} not found in kevers")
-            raise KeyGenerationError(f"KERI AID not found: {aid}")
+            raise PeerAIDMissingError(f"KERI AID not found: {aid}")
         except Exception as e:
             logger.error(f"Failed to generate keypair: {e}")
             raise KeyGenerationError(f"Key generation failed: {e}") from e

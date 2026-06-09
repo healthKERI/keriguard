@@ -24,7 +24,6 @@ kli export --name registrar-sentinel --alias registrar-sentinel --ends > /tmp/re
 kli init --name peer --salt 0ACDEyMzQ1Njc4OWxtbmPeer --nopasscode --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
 kli incept --name peer --alias peer --file "${KERIGUARD_SCRIPT_DIR}/data/base-aid.json"
 
-
 echo "Importing the KERIGuard Schema"
 kli vc schema import --name keriguard --schema "${KERIGUARD_SCHEMA_DIR}/wireguard-interface-v1.0.0.json"
 kli vc schema import --name keriguard --schema "${KERIGUARD_SCHEMA_DIR}/wireguard-connection-v1.0.0.json"
@@ -42,13 +41,15 @@ kli vc schema import --name peer --schema "${KERIGUARD_SCHEMA_DIR}/wireguard-con
 echo 'resolving keriguard'
 kli oobi resolve --name admin --oobi-alias keriguard --oobi http://127.0.0.1:5642/oobi/EMukoPLVfJ2sxulTtaAf4oTyNESAeoZGEkrEXT8JXjf0/witness
 kli oobi resolve --name keriguard-sentinel --oobi-alias keriguard --oobi http://127.0.0.1:5642/oobi/EMukoPLVfJ2sxulTtaAf4oTyNESAeoZGEkrEXT8JXjf0/witness
+kli oobi resolve --name registrar  --oobi-alias keriguard --oobi http://127.0.0.1:5642/oobi/EMukoPLVfJ2sxulTtaAf4oTyNESAeoZGEkrEXT8JXjf0/witness
 echo 'resolving admin'
 kli oobi resolve --name keriguard --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness
 kli oobi resolve --name registrar --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness
 kli oobi resolve --name peer --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness
 echo 'resolving peer'
 kli oobi resolve --name admin --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
-kli oobi resolve --name keriguard --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
+kli oobi resolve --name registrar --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
+# kli oobi resolve --name keriguard --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
 echo 'resolving registrar'
 kli import --name keriguard --alias registrar --file /tmp/registrar.cesr
 kli import --name registrar-sentinel --alias registrar --file /tmp/registrar.cesr

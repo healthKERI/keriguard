@@ -20,6 +20,13 @@ from keriguard.app.sentinel.config import SentinelConfig
 parser = argparse.ArgumentParser(description="Start KERIguard Sentinel event handler")
 parser.set_defaults(handler=lambda args: start(args))
 parser.add_argument(
+    "--sentinel-aid",
+    "-s",
+    type=str,
+    required=True,
+    help="AID of the Sentinel to start",
+)
+parser.add_argument(
     "--sentinel-export-dir",
     "-e",
     type=str,
@@ -108,6 +115,7 @@ def start(args):
     # Create configuration
     config = SentinelConfig(
         export_dir=str(export_dir),
+        sentinel_aid=args.sentinel_aid,
         poll_interval=args.poll_interval,
         config_dir=args.config_dir,
         hby=hby,
