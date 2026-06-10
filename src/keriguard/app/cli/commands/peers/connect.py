@@ -151,14 +151,6 @@ async def issue_credential(args):
     alias = args.alias
     bran = args.bran
 
-    # Validate mutual exclusivity of --output and --registrar-url
-    if args.output and args.registrar_url:
-        print(
-            "Error: --output and --registrar-url are mutually exclusive. Please specify only one.",
-            file=sys.stderr,
-        )
-        return 1
-
     # Validate input counts
     if not args.peer or len(args.peer) != 2:
         print(

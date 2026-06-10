@@ -173,14 +173,6 @@ async def issue_credential(args):
     alias = args.alias
     bran = args.bran
 
-    # Validate mutual exclusivity of --output and --registrar-url
-    if args.output and args.registrar_url:
-        print(
-            "Error: --output and --registrar-url are mutually exclusive. Please specify only one.",
-            file=sys.stderr,
-        )
-        return 1
-
     # Load existing Hab
     with existing.existingHab(name=name, alias=alias, base=args.base, bran=bran) as (
         hby,
