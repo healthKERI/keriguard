@@ -7,6 +7,16 @@ set -e
 kli init --name admin --salt 0ACDEyMzQ1Njc4OWxtbm9admin --nopasscode --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
 kli incept --name admin --alias admin --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json
 
+kli init --name keriguard --config-dir /opt/healthkeri/config --config-file keri-config --nopasscode
+kli incept --name keriguard --alias keriguard --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0 --transferable --config "/opt/healthkeri/config"
+
+kli init --name keriguard --salt 0ACDEyMzQ1Njc4OWxtbm9GhI --config-dir /opt/healthkeri/config --config-file keri-config --nopasscode
+kli incept --name keriguard --alias keriguard --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0 --transferable --config "/opt/healthkeri/config"
+
+kli init --name peer --salt 0ACDEyMzQ1Njc4OWxtbmPeer --config-dir /opt/healthkeri/config --config-file keri-config --nopasscode
+kli incept --name peer --alias peer --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0 --transferable --config "/opt/healthkeri/config"
+
+
 kli init --name registrar --salt 0ACDEyMzQ1Njc4OWxtbm9reg --nopasscode --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
 kli incept --name registrar --alias registrar --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json
 kli init --name registrar-sentinel --salt 0ACDEyMzQ1Njc4OWxtbm9kgs --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config --nopasscode
@@ -19,8 +29,8 @@ echo REGISTRAR OOBI: "$(kli oobi generate --name registrar --alias registrar --r
 echo ADMIN AID: "$(kli aid --name admin --alias admin)"
 echo ADMIN OOBI: "$(kli oobi generate --name admin --alias admin --role witness)"
 
-kg guardian up --salt 0ACDEyMzQ1Njc4OWxtbm9GhI --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "${KERIGUARD_SCRIPT_DIR}/data/keriguard-sentinel.yaml"
-kg guardian up --name peer --alias peer --salt 0ACDEyMzQ1Njc4OWxtbmPeer --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "${KERIGUARD_SCRIPT_DIR}/data/peer-keriguard-sentinel.yaml"
+kg guardian up --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "${KERIGUARD_SCRIPT_DIR}/data/keriguard-sentinel.yaml"
+kg guardian up --name peer --alias peer --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "${KERIGUARD_SCRIPT_DIR}/data/peer-keriguard-sentinel.yaml"
 
 echo "Importing the KERIGuard Schema"
 kli vc schema import --name registrar --schema "${KERIGUARD_SCHEMA_DIR}/wireguard-interface-v1.0.0.json"

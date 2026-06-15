@@ -16,6 +16,7 @@ from sentinel.framework import register_handler, run
 
 from keriguard.app.sentinel import KeriguardEventHandler
 from keriguard.app.sentinel.config import SentinelHandlerConfig
+from keriguard.db.basing import KERIGuardBaser
 
 parser = argparse.ArgumentParser(description="Start KERIguard Sentinel event handler")
 parser.set_defaults(handler=lambda args: start(args))
@@ -111,6 +112,7 @@ def start(args):
     hby = habbing.Habery(name=args.name, base=args.base, bran=args.bran)
     hab = hby.habByName(args.alias)
     rgy = credentialing.Regery(hby=hby, name=hby.name, base=hby.base, temp=hby.temp)
+    kgb = KERIGuardBaser(name=hby.name, base=hby.base, temp=hby.temp)
 
     # Create configuration
     config = SentinelHandlerConfig(
@@ -121,6 +123,7 @@ def start(args):
         hby=hby,
         hab=hab,
         rgy=rgy,
+        kgb=kgb,
     )
 
     # Create and register handler
