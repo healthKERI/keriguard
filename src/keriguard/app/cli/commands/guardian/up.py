@@ -9,7 +9,6 @@ Initialize the KERIGuard server
 import argparse
 import asyncio
 
-import requests
 from keri import help, kering
 from keri.app import habbing, connecting
 from keri.app.keeping import Algos
@@ -90,6 +89,11 @@ parser.add_argument(
     default=None,
     required=False,
     help="Path to sentinel config file",
+)
+parser.add_argument(
+    "--skip-oobi",
+    action="store_true",
+    help="Skip loading OOBIs for Registrar and Issuer (useful for creating Registrar and Issuer)",
 )
 
 
@@ -203,24 +207,19 @@ async def up(args):
     # Get keriguard KEL into Sentinel so he can respond to requests.
     load_oobi(hby=sentinel_hby, oobi=keriguard_oobi, alias="keriguard")
 
-    response = requests.get(config.registrar.oobi)
-    keriguard_hby.psr.parse(ims=response.content)
-    sentinel_hab.psr.parse(ims=response.content)
+    if not args.skip_oobi:
+        load_oobi(hby=keriguard_hby, oobi=config.registrar.oobi, alias="registrar")
+        load_oobi(hby=keriguard_hby, oobi=config.issuer.oobi, alias="issuer")
+        load_oobi(hby=sentinel_hby, oobi=config.registrar.oobi, alias="registrar")
+        load_oobi(hby=sentinel_hby, oobi=config.issuer.oobi, alias="issuer")
 
-    response = requests.get(config.issuer.oobi)
-    keriguard_hby.psr.parse(ims=response.content)
-    sentinel_hab.psr.parse(ims=response.content)
-
-    keriguard_hby.kvy.processEscrows()
-    sentinel_hab.kvy.processEscrows()
-
-    if (
-        config.registrar.aid not in keriguard_hby.kevers
-        or config.issuer.aid not in keriguard_hby.kevers
-    ):
-        raise ConfigurationError(
-            "Unable to resolve configuration root identifiers. Please check your configuration"
-        )
+        if (
+            config.registrar.aid not in keriguard_hby.kevers
+            or config.issuer.aid not in keriguard_hby.kevers
+        ):
+            raise ConfigurationError(
+                "Unable to resolve configuration root identifiers. Please check your configuration"
+            )
 
     sentinel_config = SentinelConfig()
     sentinel_config.name = sentinel_name
