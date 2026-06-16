@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from keri.app.habbing import Habery, Hab
 from keri.vdr.credentialing import Regery
 
+from keriguard.db.basing import KERIGuardBaser
+
 
 @dataclass
 class SentinelHandlerConfig:
@@ -27,5 +29,6 @@ class SentinelHandlerConfig:
     hby: Habery = None
     hab: Hab = None
     rgy: Regery = None
+    kgb: KERIGuardBaser = None
     # Handler behavior
     backup_configs: bool = True  # Create .bak files on updates
