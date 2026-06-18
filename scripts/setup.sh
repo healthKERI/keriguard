@@ -7,18 +7,15 @@ set -e
 kli init --name admin --salt 0ACDEyMzQ1Njc4OWxtbm9admin --nopasscode --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
 kli incept --name admin --alias admin --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json
 
-kli init --name keriguard --config-dir /opt/healthkeri/config --config-file keri-config --nopasscode
-kli incept --name keriguard --alias keriguard --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0 --transferable --config "/opt/healthkeri/config"
+kli init --name keriguard --salt 0ACDEyMzQ1Njc4OWxtbm9GhI --nopasscode  --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
+kli incept --name keriguard --alias keriguard --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json
 
-kli init --name keriguard --salt 0ACDEyMzQ1Njc4OWxtbm9GhI --config-dir /opt/healthkeri/config --config-file keri-config --nopasscode
-kli incept --name keriguard --alias keriguard --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0 --transferable --config "/opt/healthkeri/config"
+kli init --name peer --salt 0ACDEyMzQ1Njc4OWxtbmPeer --nopasscode  --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
+kli incept --name peer --alias peer --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json
 
-kli init --name peer --salt 0ACDEyMzQ1Njc4OWxtbmPeer --config-dir /opt/healthkeri/config --config-file keri-config --nopasscode
-kli incept --name peer --alias peer --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0 --transferable --config "/opt/healthkeri/config"
+kli init --name registrar --salt 0ACDEyMzQ1Njc4OWxtbm9reg --nopasscode --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar
+kli incept --name registrar --alias registrar --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json --config "${KERIGUARD_SCRIPT_DIR}"
 
-
-kli init --name registrar --salt 0ACDEyMzQ1Njc4OWxtbm9reg --nopasscode --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config
-kli incept --name registrar --alias registrar --file "${KERIGUARD_SCRIPT_DIR}"/data/base-aid.json
 kli init --name registrar-sentinel --salt 0ACDEyMzQ1Njc4OWxtbm9kgs --config-dir "${KERIGUARD_SCRIPT_DIR}" --config-file registrar-config --nopasscode
 kli incept --name registrar-sentinel --alias registrar-sentinel --icount 1 --isith "1" --ncount 1 --nsith "1" --toad 0
 kli export --name registrar-sentinel --alias registrar-sentinel --ends > /tmp/registrar-sentinel.cesr
@@ -29,8 +26,8 @@ echo REGISTRAR OOBI: "$(kli oobi generate --name registrar --alias registrar --r
 echo ADMIN AID: "$(kli aid --name admin --alias admin)"
 echo ADMIN OOBI: "$(kli oobi generate --name admin --alias admin --role witness)"
 
-kg guardian up --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "${KERIGUARD_SCRIPT_DIR}/data/keriguard-sentinel.yaml"
-kg guardian up --name peer --alias peer --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "${KERIGUARD_SCRIPT_DIR}/data/peer-keriguard-sentinel.yaml"
+kg guardian up --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "./wireguard/keriguard-sentinel.yaml"
+kg guardian up --name peer --alias peer --config "${KERIGUARD_SCRIPT_DIR}/data/keriguard.yaml" --sentinel-config-path "./wireguard/peer-keriguard-sentinel.yaml"
 
 echo "Importing the KERIGuard Schema"
 kli vc schema import --name registrar --schema "${KERIGUARD_SCHEMA_DIR}/wireguard-interface-v1.0.0.json"
@@ -43,17 +40,17 @@ kli vc schema import --name admin --schema "${KERIGUARD_SCHEMA_DIR}/wireguard-co
 kli vc registry incept --name admin --alias admin --registry-name admin
 
 echo 'resolving keriguard'
-kli oobi resolve --name admin --oobi-alias keriguard --oobi http://127.0.0.1:5642/oobi/EPf5v6oe7FuVImPgCo1ZvCDNpyz6pUZpsE1-GptErqqT/witness
+kli oobi resolve --name admin --oobi-alias keriguard --oobi http://127.0.0.1:5642/oobi/EMukoPLVfJ2sxulTtaAf4oTyNESAeoZGEkrEXT8JXjf0/witness
 
 echo 'resolving admin'
 kli oobi resolve --name registrar --oobi-alias admin --oobi http://127.0.0.1:5642/oobi/EI6-tTwfonE2nKknuUkhkwRe-Op7kTYIeCUJcuuMUFUr/witness
 
 echo 'resolving peer'
-kli oobi resolve --name admin --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EIjg1HWuJEWMPsYxmrcZN5Lp4Ph5c6K_yBC3RF8JSXLd/witness
+kli oobi resolve --name admin --oobi-alias peer --oobi http://127.0.0.1:5642/oobi/EK9MXvIlVUcs9sztuX3oTJkBq-BqdKUxyLZmiOqXWZ8u/witness
 
 echo 'resolving registrar'
-kli import --name registrar-sentinel --alias registrar --file /tmp/registrar.cesr
-kli import --name admin --alias registrar --file /tmp/registrar.cesr
+kli oobi resolve --name registrar-sentinel --oobi-alias registrar --oobi http://127.0.0.1:5642/oobi/EBraKLI-FshC4NeiDnJZMmypYaHAb7kbzlL6tEIT0Cip/witness
+kli oobi resolve --name admin --oobi-alias registrar --oobi http://127.0.0.1:5642/oobi/EBraKLI-FshC4NeiDnJZMmypYaHAb7kbzlL6tEIT0Cip/witness
 
 echo 'resolving sentinels'
 kli import --name registrar --alias registrar-sentinel --file /tmp/registrar-sentinel.cesr
