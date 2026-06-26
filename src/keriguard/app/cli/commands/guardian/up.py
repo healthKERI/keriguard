@@ -163,8 +163,18 @@ async def up(args):
     print(keriguard_oobi)
     print()
 
-    # Get keriguard KEL into Sentinel so he can respond to requests.
-    load_oobi(hby=sentinel_hby, oobi=keriguard_oobi, alias="keriguard")
+    if config.local:
+        # Local mode: witnesses have keriguard's events; use OOBI to load into sentinel keystore.
+        load_oobi(hby=sentinel_hby, oobi=keriguard_oobi, alias="keriguard")
+    else:
+        # SaaS mode: sentinel up never submits keriguard's events to KERI witnesses (only to
+        # hkweb MongoDB).  The sentinel keystore doesn't need keriguard's key state to verify
+        # credentials — the verifier only checks the issuer, not the recipient.
+        # Just register the OOBI URL as contact metadata so other code can reference it.
+        connecting.Organizer(hby=sentinel_hby).update(
+            pre=keriguard_hab.pre,
+            data=dict(alias=keriguard_alias, oobi=keriguard_oobi),
+        )
 
     if config.local:
         load_oobi(hby=keriguard_hby, oobi=config.registrar.oobi, alias="registrar")
@@ -202,6 +212,8 @@ async def up(args):
     sentinel_config = SentinelConfig()
     sentinel_config.name = sentinel_name
     sentinel_config.alias = sentinel_alias
+    sentinel_config.server_name = keriguard_name
+    sentinel_config.server_alias = keriguard_alias
     sentinel_config.bran = args.bran
     sentinel_config.base = args.base
     sentinel_config.uxd = True
