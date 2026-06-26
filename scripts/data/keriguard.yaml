@@ -1,6 +1,17 @@
 # KERIGuard Initialization Configuration
 # This configuration file specifies the external entities that a KERIGuard instance
 # needs to interact with during initialization and operation.
+#
+# SaaS mode example (no registrar required):
+#
+#   local: false
+#   server:
+#     code: "ABC..."           # server auth code provisioned via Locksmith
+#   issuer:
+#     aid: "EI6-..."
+#     oobi: "http://witness.example.com/oobi/EI6-.../witness"
+#
+# Local mode is the default (local: true, or omit the local key entirely).
 
 # Registrar Configuration
 # The registrar is responsible for managing and publishing credentials

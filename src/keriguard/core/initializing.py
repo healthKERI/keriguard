@@ -142,6 +142,18 @@ class IssuerConfig:
         return self._data.get("oobi", "")
 
 
+class ServerConfig:
+    """Configuration for the healthKERI SaaS server (SaaS mode only)."""
+
+    def __init__(self, data: Dict[str, Any]):
+        self._data = data
+
+    @property
+    def code(self) -> str:
+        """Server auth code provisioned via Locksmith."""
+        return self._data.get("code", "")
+
+
 class KeriguardConfig:
     """
     Configuration loader and accessor for KERIGuard initialization.
@@ -160,6 +172,8 @@ class KeriguardConfig:
         self._data = data
         self._registrar = RegistrarConfig(data.get("registrar", {}))
         self._issuer = IssuerConfig(data.get("issuer", {}))
+        server_data = data.get("server")
+        self._server = ServerConfig(server_data) if server_data else None
 
     @classmethod
     def load(cls, config_path: str) -> "KeriguardConfig":
@@ -187,6 +201,16 @@ class KeriguardConfig:
             data = {}
 
         return cls(data)
+
+    @property
+    def local(self) -> bool:
+        """True for local mode (self-hosted registrar); False for SaaS mode (hkweb)."""
+        return self._data.get("local", True)
+
+    @property
+    def server(self) -> Optional["ServerConfig"]:
+        """SaaS server configuration (only present when local=False)."""
+        return self._server
 
     @property
     def registrar(self) -> RegistrarConfig:

@@ -163,46 +163,70 @@ async def up(args):
     print(keriguard_oobi)
     print()
 
-    # Get keriguard KEL into Sentinel so he can respond to requests.
-    load_oobi(hby=sentinel_hby, oobi=keriguard_oobi, alias="keriguard")
-    load_oobi(hby=keriguard_hby, oobi=config.registrar.oobi, alias="registrar")
-    load_oobi(
-        hby=keriguard_hby,
-        oobi=config.registrar.keriguard.oobi,
-        alias="registrar-keriguard",
-    )
-    load_oobi(hby=keriguard_hby, oobi=config.issuer.oobi, alias="issuer")
-    load_oobi(hby=sentinel_hby, oobi=config.registrar.oobi, alias="registrar")
-    load_oobi(
-        hby=sentinel_hby,
-        oobi=config.registrar.keriguard.oobi,
-        alias="registrar-keriguard",
-    )
-    load_oobi(hby=sentinel_hby, oobi=config.issuer.oobi, alias="issuer")
-
-    if (
-        config.registrar.aid not in keriguard_hby.kevers
-        or config.registrar.keriguard.aid not in keriguard_hby.kevers
-        or config.issuer.aid not in keriguard_hby.kevers
-    ):
-        raise ConfigurationError(
-            "Unable to resolve configuration root identifiers. Please check your configuration"
+    if config.local:
+        # Local mode: witnesses have keriguard's events; use OOBI to load into sentinel keystore.
+        load_oobi(hby=sentinel_hby, oobi=keriguard_oobi, alias="keriguard")
+    else:
+        # SaaS mode: sentinel up never submits keriguard's events to KERI witnesses (only to
+        # hkweb MongoDB).  The sentinel keystore doesn't need keriguard's key state to verify
+        # credentials — the verifier only checks the issuer, not the recipient.
+        # Just register the OOBI URL as contact metadata so other code can reference it.
+        connecting.Organizer(hby=sentinel_hby).update(
+            pre=keriguard_hab.pre,
+            data=dict(alias=keriguard_alias, oobi=keriguard_oobi),
         )
+
+    if config.local:
+        load_oobi(hby=keriguard_hby, oobi=config.registrar.oobi, alias="registrar")
+        load_oobi(
+            hby=keriguard_hby,
+            oobi=config.registrar.keriguard.oobi,
+            alias="registrar-keriguard",
+        )
+        load_oobi(hby=keriguard_hby, oobi=config.issuer.oobi, alias="issuer")
+        load_oobi(hby=sentinel_hby, oobi=config.registrar.oobi, alias="registrar")
+        load_oobi(
+            hby=sentinel_hby,
+            oobi=config.registrar.keriguard.oobi,
+            alias="registrar-keriguard",
+        )
+        load_oobi(hby=sentinel_hby, oobi=config.issuer.oobi, alias="issuer")
+
+        if (
+            config.registrar.aid not in keriguard_hby.kevers
+            or config.registrar.keriguard.aid not in keriguard_hby.kevers
+            or config.issuer.aid not in keriguard_hby.kevers
+        ):
+            raise ConfigurationError(
+                "Unable to resolve configuration root identifiers. Please check your configuration"
+            )
+    else:
+        load_oobi(hby=keriguard_hby, oobi=config.issuer.oobi, alias="issuer")
+        load_oobi(hby=sentinel_hby, oobi=config.issuer.oobi, alias="issuer")
+
+        if config.issuer.aid not in keriguard_hby.kevers:
+            raise ConfigurationError(
+                "Unable to resolve issuer identifier. Please check your configuration"
+            )
 
     sentinel_config = SentinelConfig()
     sentinel_config.name = sentinel_name
     sentinel_config.alias = sentinel_alias
+    sentinel_config.server_name = keriguard_name
+    sentinel_config.server_alias = keriguard_alias
     sentinel_config.bran = args.bran
     sentinel_config.base = args.base
     sentinel_config.uxd = True
-    sentinel_config.local = True
+    sentinel_config.local = config.local
     sentinel_config.export_dir = f"/usr/local/var/sentinel/{args.name}"
 
-    sentinel_config.registrar.aid = config.registrar.aid
-    sentinel_config.registrar.oobi = config.registrar.oobi
-    sentinel_config.registrar.url = config.registrar.url
     sentinel_config.issuer.aid = config.issuer.aid
     sentinel_config.issuer.oobi = config.issuer.oobi
+
+    if config.local:
+        sentinel_config.registrar.aid = config.registrar.aid
+        sentinel_config.registrar.oobi = config.registrar.oobi
+        sentinel_config.registrar.url = config.registrar.url
 
     if args.sentinel_config_path:
         sentinel_config.save(args.sentinel_config_path)
@@ -210,14 +234,16 @@ async def up(args):
         sentinel_config.save(f"/etc/sentinel/{args.name}.yaml")
 
     kgb = KERIGuardBaser(name=args.name, base=args.base)
-    kgb.set_registrar(
-        aid=config.registrar.aid,
-        keriguard_aid=config.registrar.keriguard.aid,
-        oobi=config.registrar.oobi,
-        keriguard_oobi=config.registrar.keriguard.oobi,
-        url=config.registrar.url,
-        ipaddress=config.registrar.keriguard.ipaddress,
-        endpoint=config.registrar.keriguard.endpoint,
-    )
+
+    if config.local:
+        kgb.set_registrar(
+            aid=config.registrar.aid,
+            keriguard_aid=config.registrar.keriguard.aid,
+            oobi=config.registrar.oobi,
+            keriguard_oobi=config.registrar.keriguard.oobi,
+            url=config.registrar.url,
+            ipaddress=config.registrar.keriguard.ipaddress,
+            endpoint=config.registrar.keriguard.endpoint,
+        )
 
     kgb.set_issuer(aid=config.issuer.aid, oobi=config.issuer.oobi)
