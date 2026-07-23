@@ -19,7 +19,6 @@ from keriguard.core.systeming import (
     WireGuardNotApprovedError,
     _send_helper_request,
     _systemd_unit_active,
-    call_systemd,
     control_wireguard,
     disable_wireguard,
     enable_wireguard,
