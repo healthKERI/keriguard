@@ -15,6 +15,7 @@ import pytest
 from keriguard.core.systeming import (
     WireGuardAction,
     WireGuardControlError,
+    call_wireguard_systemd,
     WireGuardNotApprovedError,
     _send_helper_request,
     _systemd_unit_active,
@@ -210,7 +211,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.START, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.START, "wg0")
 
             assert result == "/org/freedesktop/systemd1/job/123"
             mock_manager.call_start_unit.assert_called_once_with(
@@ -237,7 +238,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.STOP, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.STOP, "wg0")
 
             assert result == "/org/freedesktop/systemd1/job/124"
             mock_manager.call_stop_unit.assert_called_once_with(
@@ -264,7 +265,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.RESTART, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.RESTART, "wg0")
 
             assert result == "/org/freedesktop/systemd1/job/125"
             mock_manager.call_restart_unit.assert_called_once_with(
@@ -291,7 +292,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.RELOAD, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.RELOAD, "wg0")
 
             assert result == "/org/freedesktop/systemd1/job/126"
             mock_manager.call_reload_unit.assert_called_once_with(
@@ -318,7 +319,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.RELOAD_OR_RESTART, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.RELOAD_OR_RESTART, "wg0")
 
             assert result == "/org/freedesktop/systemd1/job/127"
             mock_manager.call_reload_or_restart_unit.assert_called_once_with(
@@ -348,7 +349,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.ENABLE, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.ENABLE, "wg0")
 
             assert result[0] is True
             mock_manager.call_enable_unit_files.assert_called_once_with(
@@ -375,7 +376,7 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_systemd(WireGuardAction.DISABLE, "wg0")
+            result = await call_wireguard_systemd(WireGuardAction.DISABLE, "wg0")
 
             assert isinstance(result, list)
             mock_manager.call_disable_unit_files.assert_called_once_with(
@@ -399,13 +400,13 @@ class TestCallSystemd:
             mock_message_bus_class.return_value = mock_message_bus_instance
 
             with pytest.raises(ValueError, match="Unsupported WireGuard action"):
-                await call_systemd("invalid_action", "wg0")
+                await call_wireguard_systemd("invalid_action", "wg0")
 
     @pytest.mark.asyncio
     async def test_call_systemd_invalid_interface(self):
         """Test that invalid interface name raises ValueError."""
         with pytest.raises(ValueError, match="Invalid WireGuard interface name"):
-            await call_systemd(WireGuardAction.START, "wg/0")
+            await call_wireguard_systemd(WireGuardAction.START, "wg/0")
 
 
 # ============================================================================
@@ -418,7 +419,7 @@ class TestControlWireguard:
 
     @pytest.mark.asyncio
     @patch("keriguard.core.systeming.supports_dbus_systemd")
-    @patch("keriguard.core.systeming.call_systemd")
+    @patch("keriguard.core.systeming.call_wireguard_systemd")
     async def test_control_wireguard_linux_with_systemd(
         self, mock_call_systemd, mock_supports
     ):
