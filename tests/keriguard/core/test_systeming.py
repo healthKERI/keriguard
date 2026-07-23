@@ -319,7 +319,9 @@ class TestCallSystemd:
             mock_message_bus_instance.connect = AsyncMock(return_value=mock_bus)
             mock_message_bus_class.return_value = mock_message_bus_instance
 
-            result = await call_wireguard_systemd(WireGuardAction.RELOAD_OR_RESTART, "wg0")
+            result = await call_wireguard_systemd(
+                WireGuardAction.RELOAD_OR_RESTART, "wg0"
+            )
 
             assert result == "/org/freedesktop/systemd1/job/127"
             mock_manager.call_reload_or_restart_unit.assert_called_once_with(

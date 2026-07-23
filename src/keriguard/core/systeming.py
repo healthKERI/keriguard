@@ -411,4 +411,3 @@ async def enable_sentinel() -> object:
 async def disable_sentinel() -> object:
     """Disable the keriguard-sentinel systemd service."""
     return await call_systemd_unit(WireGuardAction.DISABLE, SENTINEL_UNIT)
-

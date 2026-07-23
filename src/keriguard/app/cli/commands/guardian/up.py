@@ -24,7 +24,12 @@ from keriguard.core.initializing import (
     load_oobi,
     KeriguardConfig,
 )
-from keriguard.core.systeming import enable_guardian, enable_sentinel, start_sentinel, start_guardian
+from keriguard.core.systeming import (
+    enable_guardian,
+    enable_sentinel,
+    start_sentinel,
+    start_guardian,
+)
 from keriguard.core.wireguarding import SCHEMA_OOBIS, Schema
 from keriguard.db.basing import KERIGuardBaser
 
@@ -126,14 +131,28 @@ async def up(args):
         name=keriguard_name, base=args.base, temp=False, **kwa
     )
     if not (keriguard_hab := keriguard_hby.habByName(keriguard_alias)):
-        keriguard_hab = keriguard_hby.makeHab(name=keriguard_alias, transferable=True,
-                                              icount=1, isith="1", ncount=1, nsith="1", toad=0)
+        keriguard_hab = keriguard_hby.makeHab(
+            name=keriguard_alias,
+            transferable=True,
+            icount=1,
+            isith="1",
+            ncount=1,
+            nsith="1",
+            toad=0,
+        )
 
     # Create the environment and identifier for the sentinel
     sentinel_hby = habbing.Habery(name=sentinel_name, base=args.base, temp=False, **kwa)
     if not (sentinel_hab := sentinel_hby.habByName(sentinel_alias)):
-        sentinel_hab = sentinel_hby.makeHab(name=sentinel_alias, transferable=not config.local,
-            icount=1, isith="1", ncount=1, nsith="1", toad=0)
+        sentinel_hab = sentinel_hby.makeHab(
+            name=sentinel_alias,
+            transferable=not config.local,
+            icount=1,
+            isith="1",
+            ncount=1,
+            nsith="1",
+            toad=0,
+        )
 
     # Load KERIGuard schema in both databases
     for hby in (sentinel_hby, keriguard_hby):
@@ -215,7 +234,7 @@ async def up(args):
             auth_key=config.server.auth_key,  # type: ignore
             server_hby=keriguard_hby,
             server_hab=keriguard_hab,
-            witness=True
+            witness=True,
         )
 
     # Use OS specific service enable and start for Guardian and Sentinel

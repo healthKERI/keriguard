@@ -84,7 +84,10 @@ async def process(args):
         print("Interface name is required.")
         sys.exit(1)
 
-    with existing.existingHab(name=name, alias=alias, base=args.base, bran=bran) as (hby, hab):
+    with existing.existingHab(name=name, alias=alias, base=args.base, bran=bran) as (
+        hby,
+        hab,
+    ):
         kgb = KERIGuardBaser(name=name, base=args.base)
 
         sentinel_name = f"{name}-sentinel"
@@ -119,7 +122,9 @@ async def process(args):
 
             grant = serdering.SerderKERI(raw=bytes(data))
 
-            rgy = credentialing.Regery(hby=hby, name=hby.name, base=hby.base, temp=hby.temp)
+            rgy = credentialing.Regery(
+                hby=hby, name=hby.name, base=hby.base, temp=hby.temp
+            )
             exc = exchanging.Exchanger(hby=hby, handlers=[])
             verifier = verifying.Verifier(hby=hby, reger=rgy.reger)
             psr = parsing.Parser(kvy=hby.kvy, tvy=rgy.tvy, vry=verifier, exc=exc)
