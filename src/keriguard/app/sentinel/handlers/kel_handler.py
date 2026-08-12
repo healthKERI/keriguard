@@ -36,20 +36,16 @@ class KELHandler:
             return
 
         # Check if this AID has a kever (key event registry)
-        kever = event.hby.kevers.get(event.aid)
-        if kever is None:
+        if event.aid not in event.hby.kevers:
             logger.info(f"AID {event.aid} not found locally - may need to sync")
             return
+        kever = event.hby.kevers[event.aid]
 
         # Get current verification key
         current_verfer = kever.verfers[0]
         logger.debug(f"Current verfer for {event.aid}: {current_verfer.qb64}")
 
         # Update or create Wireguard peer configuration
-        await self.service.update_peer_for_aid(
-            aid=event.aid,
-            verfer=current_verfer,
-            kever=kever,
-        )
+        await self.service.update_peer_for_aid(aid=event.aid, verfer=current_verfer)
 
         logger.info(f"KEL event processed for {event.aid}")
