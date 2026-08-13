@@ -11,7 +11,6 @@ from pathlib import Path
 import pysodium
 from keri import help
 from keri.core.coring import Verfer
-from keri.core.eventing import Kever
 
 from keriguard.core import (
     WireguardConfigParser,
@@ -31,12 +30,7 @@ class KELService:
     def __init__(self, config: SentinelHandlerConfig):
         self.config = config
 
-    async def update_peer_for_aid(
-        self,
-        aid: str,
-        verfer: Verfer,
-        kever: Kever,
-    ):
+    async def update_peer_for_aid(self, aid: str, verfer: Verfer):
         """
         Update or create Wireguard peer configuration for an AID.
 
