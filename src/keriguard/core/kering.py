@@ -8,6 +8,7 @@ Methods for creating IPEX messages
 
 import asyncio
 from datetime import datetime, UTC
+from typing import Optional
 
 from keri import kering
 from keri.app import signing, connecting
@@ -163,7 +164,7 @@ class Issuer:
             )
 
         saiders = self.rgy.reger.subjs.get(peer1_aid)
-        creder = None
+        creder: Optional[serdering.SerderACDC] = None
         for saider in saiders:
             (
                 c,
@@ -208,7 +209,7 @@ class Issuer:
             )
 
         saiders = self.rgy.reger.subjs.get(peer2_aid)
-        creder2 = None
+        creder2: Optional[serdering.SerderACDC] = None
         for saider in saiders:
             (
                 c,
@@ -465,6 +466,80 @@ class Issuer:
             msg.extend(anc)
 
             return creder, bytes(msg)
+
+        except kering.ValidationError as e:
+            raise ValueError(f"Credential revocation validation failed: {e}")
+
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            raise ValueError(f"Failed to revoke credential: {e}")
+
+    async def revoke_connection_credential(
+        self,
+        credential_said: str,
+        auths: dict,
+    ):
+        """
+        Revoke a previously issued connection credential.
+
+        Args:
+            credential_said: SAID of the credential to revoke
+            auths: Authorization dict for witness receipts
+
+        Returns:
+            tuple: (Creder object, serialized revocation message bytes)
+        """
+        dt = datetime.now(UTC).isoformat()
+
+        try:
+            # Retrieve the credential from registry
+            creder, *_ = self.rgy.reger.cloneCred(said=credential_said)
+            if creder is None:
+                raise ValueError(f"Credential {credential_said} not found")
+
+            # Get the registry
+            registry_said = creder.sad.get("ri")
+            registry = self.rgy.regs.get(registry_said)
+            if registry is None:
+                raise kering.ConfigurationError(
+                    f"Registry {registry_said} not found for credential"
+                )
+
+            # Create revocation TEL event
+            rserder = registry.revoke(said=creder.said, dt=dt)
+
+            # Anchor revocation to KEL
+            rseal = dict(i=creder.said, s=rserder.ked["s"], d=rserder.said)
+            anc = self.hab.interact(data=[rseal])
+            aserder = serdering.SerderKERI(raw=anc)
+
+            # Get witness receipts for the anchoring event
+            await self.receiptor.receipt(aserder.pre, aserder.sn, auths=auths)
+
+            # Process revocation
+            self.registrar.revoke(creder, rserder, aserder)
+
+            # Wait for TEL processing to complete
+            snkey = dbing.snKey(creder.said, 1)  # Revocation is sequence number 1
+            while not self.rgy.reger.getTel(key=snkey):
+                self.hab.kvy.processEscrows()
+                self.rgy.processEscrows()
+                self.credentialer.processEscrows()
+                self.verifier.processEscrows()
+                await asyncio.sleep(0.1)
+
+            # Serialize for publishing: registry inception + revocation TEL event + anchoring event
+            anc = self.hab.db.cloneEvtMsg(aserder.pre, 0, aserder.said)
+            reg = self.rgy.reger.cloneTvtAt(creder.regi)
+            rev = self.rgy.reger.cloneTvtAt(creder.said, sn=1)
+
+            msg = bytearray(reg)
+            msg.extend(rev)
+            msg.extend(anc)
+
+            return rev, anc
 
         except kering.ValidationError as e:
             raise ValueError(f"Credential revocation validation failed: {e}")
